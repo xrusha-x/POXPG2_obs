@@ -21,6 +21,7 @@ public class PlayerControllerUpdate : MonoBehaviour
     private bool sprint;
     private bool isDoubleJump;
     private bool jumpLock;
+    private bool setGround;
 
 
 
@@ -81,21 +82,19 @@ public class PlayerControllerUpdate : MonoBehaviour
 
 
 
+        bool grand = groundChecker != null && groundChecker.isGrounded;
 
-        if (groundChecker != null && groundChecker.isGrounded)
+        if (grand && !setGround)
         {
-            if (isDoubleJump)
+            jumpOst = jumpMax;
+            isDoubleJump = false;
+            Debug.Log(" Приземление зарегистрировано, IsGrounded = true");
+
+            if (animator != null)
             {
-                isDoubleJump = false;
-                jumpOst = jumpMax;
-
-                if (animator != null)
-                {
-                    animator.SetBool("IsDoubleJump", false);
-
-                }
+                animator.SetBool("IsDoubleJump", false);
+                animator.SetBool("IsGrounded", true);
             }
-
         }
 
 
@@ -104,6 +103,11 @@ public class PlayerControllerUpdate : MonoBehaviour
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0);
             rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+
+            if (animator != null)
+            {
+                animator.SetBool("IsGrounded", false);
+            }
 
             jumpOst--;
 
@@ -138,7 +142,8 @@ public class PlayerControllerUpdate : MonoBehaviour
         rb.linearVelocity = new Vector2(currentSpeedX, rb.linearVelocity.y);
 
         maxVelocity();
-        Debug.Log(rb.linearVelocity);
+        
+        setGround = grand;
         jumpPressed = false;    
     }
 
