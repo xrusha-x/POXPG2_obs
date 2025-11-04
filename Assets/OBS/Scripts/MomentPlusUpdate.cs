@@ -6,6 +6,7 @@ using UnityEngine;
 //ograniczenie maksymalnej predkosci.
 public class PlayerControllerUpdate : MonoBehaviour
 {
+    public LayerMask WallLayer;
     public float moveSpeed = 5;
     public float maxSpeed = 15;
     public float jumpForce = 20;
@@ -14,7 +15,11 @@ public class PlayerControllerUpdate : MonoBehaviour
     public float groundSlow = 18;
     public float airFast = 5;
     public float airSlow = 9;
+    public float wallCheckDis = 0.05f;
+    public float slideSpeed = 2f;
     private float moveInput = 0;
+    private float coyoteTime = 0.1f;
+    private float lastGroundedTime;
     private int jumpMax = 2;
     private int jumpOst;
     private bool jumpPressed;
@@ -22,15 +27,20 @@ public class PlayerControllerUpdate : MonoBehaviour
     private bool isDoubleJump;
     private bool jumpLock;
     private bool setGround;
+    private bool isWall;
+    private bool isSlide;
 
-
-
+   
+    private float jumpBufferTime = 0.15f;
+    private float lastJumpPressedTime;
+    private float slideBuffer = 0.1f;
+    private float lastSlideTime;
 
     public Rigidbody2D rb;
     public SpriteRenderer spriteRenderer;
     public GroundChecker groundChecker;
     public Animator animator;
-    
+
 
     void Start()
     {
@@ -38,12 +48,20 @@ public class PlayerControllerUpdate : MonoBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>();
         jumpOst = jumpMax;
         animator = GetComponent<Animator>();
+        rb.sleepMode = RigidbodySleepMode2D.NeverSleep;
+        rb.interpolation = RigidbodyInterpolation2D.Interpolate;
+        rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
     }
 
 
     void Update()
     {
         moveInput = Input.GetAxisRaw("Horizontal");
+
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            lastJumpPressedTime = Time.time;
+        }
 
         if (Input.GetKeyDown(KeyCode.Space) && !jumpLock)
         {
@@ -53,9 +71,8 @@ public class PlayerControllerUpdate : MonoBehaviour
 
         if (Input.GetKeyUp(KeyCode.Space))
         {
-            jumpLock = false; 
+            jumpLock = false;
         }
-
 
         if (animator != null)
         {
@@ -71,35 +88,83 @@ public class PlayerControllerUpdate : MonoBehaviour
         {
             spriteRenderer.flipX = moveInput < 0;
         }
-
-        
     }
 
 
     void FixedUpdate()
     {
+        Vector2 wallCheckDir = spriteRenderer.flipX ? Vector2.left : Vector2.right;
+        RaycastHit2D hit = Physics2D.Raycast(transform.position, wallCheckDir, wallCheckDis, WallLayer);
+        isWall = hit.collider != null;
 
+        Debug.DrawRay(transform.position, wallCheckDir * wallCheckDis, Color.cyan);
 
+        bool pressingTowardWall = (spriteRenderer.flipX && moveInput < 0) || (!spriteRenderer.flipX && moveInput > 0);
 
-
-        bool grand = groundChecker != null && groundChecker.isGrounded;
-
-        if (grand && !setGround)
+        if (isWall && !groundChecker.isGrounded && rb.linearVelocity.y < 0 && pressingTowardWall)
         {
-            jumpOst = jumpMax;
-            isDoubleJump = false;
-            Debug.Log(" Приземление зарегистрировано, IsGrounded = true");
+            isSlide = true;
+            lastSlideTime = Time.time;
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, Mathf.Max(rb.linearVelocity.y, -slideSpeed));
+
+            if ((spriteRenderer.flipX && moveInput > 0) || (!spriteRenderer.flipX && moveInput < 0))
+            {
+                rb.linearVelocity = new Vector2(moveInput * moveSpeed, rb.linearVelocity.y);
+            }
 
             if (animator != null)
             {
-                animator.SetBool("IsDoubleJump", false);
-                animator.SetBool("IsGrounded", true);
+                animator.SetBool("isSlide", true);
+            }
+        }
+        else
+        {
+            if (Time.time - lastSlideTime > slideBuffer)
+            {
+                isSlide = false;
+                if (animator != null)
+                {
+                    animator.SetBool("isSlide", false);
+                }
             }
         }
 
+        bool groundedNow = groundChecker != null && groundChecker.isGrounded;
 
+        if (groundedNow)
+        {
+            lastGroundedTime = Time.fixedTime;
+        }
 
-        if (jumpPressed && jumpOst > 0)
+        bool grand = (Time.fixedTime - lastGroundedTime) <= coyoteTime;
+
+        if (groundedNow)
+        {
+            jumpOst = jumpMax;
+
+            if (isDoubleJump)
+            {
+                isDoubleJump = false;
+                if (animator != null)
+                {
+                    animator.SetBool("IsDoubleJump", false);
+                }
+            }
+
+            if (animator != null)
+            {
+                animator.SetBool("IsGrounded", true);
+            }
+        }
+        else
+        {
+            if (animator != null)
+            {
+                animator.SetBool("IsGrounded", false);
+            }
+        }
+
+        if ((Time.time - lastJumpPressedTime) <= jumpBufferTime && jumpOst > 0 && (grand || !groundedNow))
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0);
             rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
@@ -111,26 +176,22 @@ public class PlayerControllerUpdate : MonoBehaviour
 
             jumpOst--;
 
-            if (jumpOst == 0)
+            if (!groundedNow && jumpOst == 0)
             {
                 isDoubleJump = true;
                 if (animator != null)
                     animator.SetBool("IsDoubleJump", true);
             }
-            else
-            {
-                isDoubleJump = false;
-                if (animator != null)
-                    animator.SetBool("IsDoubleJump", false);
-            }
-        }
 
+            lastJumpPressedTime = -1;
+        }
 
         float currentSpeedX = rb.linearVelocity.x;
         bool grounded = groundChecker != null && groundChecker.isGrounded;
         float coreSpeed = moveInput * (sprint ? moveSpeed * runSpeed : moveSpeed);
         float accel = grounded ? groundFast : airFast;
         float decel = grounded ? groundSlow : airSlow;
+
         if (Mathf.Abs(coreSpeed) > 0.01f)
         {
             currentSpeedX = Mathf.MoveTowards(rb.linearVelocity.x, coreSpeed, accel * Time.fixedDeltaTime);
@@ -139,12 +200,18 @@ public class PlayerControllerUpdate : MonoBehaviour
         {
             currentSpeedX = Mathf.MoveTowards(rb.linearVelocity.x, 0, decel * Time.fixedDeltaTime);
         }
+
         rb.linearVelocity = new Vector2(currentSpeedX, rb.linearVelocity.y);
 
         maxVelocity();
-        
+
+        if (!groundChecker.isGrounded && rb.linearVelocity.y <= 0 && !jumpPressed)
+        {
+            rb.AddForce(Vector2.down * 3f);
+        }
+
         setGround = grand;
-        jumpPressed = false;    
+        jumpPressed = false;
     }
 
 
