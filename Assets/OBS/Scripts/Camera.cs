@@ -19,6 +19,7 @@ public class Camera : MonoBehaviour
 
     private Vector3 velocity = Vector3.zero;
     private Vector3 lastPlayerPos;
+    private Vector3 lookAheadPos = Vector3.zero;
 
     void Start()
     {
@@ -50,9 +51,29 @@ public class Camera : MonoBehaviour
                 break;
 
             case CameraMode.LookAhead:
-                Vector3 moveDelta = player.position - lastPlayerPos;
-                Vector3 lookAhead = new Vector3(moveDelta.x, moveDelta.y, 0) * lookAheadDistance;
-                transform.position = Vector3.SmoothDamp(transform.position, player.position + offset + lookAhead, ref velocity, smoothTime);
+                float xMove = player.position.x - lastPlayerPos.x;
+                float direction = Mathf.Sign(xMove);
+
+                if (Mathf.Abs(xMove) > 0.01f)
+                {
+                    lookAheadPos = Vector3.Lerp(
+                        lookAheadPos,
+                        new Vector3(direction * lookAheadDistance, 0, 0),
+                        Time.deltaTime * 5f
+                    );
+                }
+                else
+                {
+                    lookAheadPos = Vector3.Lerp(
+                        lookAheadPos,
+                        Vector3.zero,
+                        Time.deltaTime * 5f
+                    );
+                }
+
+                Vector3 targetPos = player.position + offset + lookAheadPos;
+                transform.position = Vector3.SmoothDamp(transform.position, targetPos, ref velocity, smoothTime);
+
                 lastPlayerPos = player.position;
                 break;
         }

@@ -1846,12 +1846,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 43a06c308ed840b4b928719bf753a5a6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mode: 0
+  mode: 3
   player: {fileID: 2092105132}
   offset: {x: 0, y: 5, z: -10}
   smoothTime: 0.3
   deadZone: {x: 1, y: 1}
-  lookAheadDistance: 2
+  lookAheadDistance: -1
 --- !u!114 &1682295098
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1859,7 +1859,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1682295093}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 72ece51f2901e7445ab60da3685d6b5f, type: 3}
   m_Name: 

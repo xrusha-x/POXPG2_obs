@@ -11,16 +11,16 @@ TagManager:
   - 
   - Water
   - UI
+  - Wall_active
+  - 
   - Ground
-  - Wall
   - 
   - 
   - 
   - 
   - 
   - 
-  - 
-  - 
+  - BackGround
   - 
   - 
   - 
@@ -38,6 +38,12 @@ TagManager:
   - 
   - 
   m_SortingLayers:
+  - name: BackGround
+    uniqueID: 1049872829
+    locked: 0
+  - name: Ground
+    uniqueID: 2196758993
+    locked: 0
   - name: Default
     uniqueID: 0
     locked: 0
