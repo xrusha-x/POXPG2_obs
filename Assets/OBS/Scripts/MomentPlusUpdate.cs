@@ -52,6 +52,21 @@ public class PlayerControllerUpdate : MonoBehaviour
         rb.sleepMode = RigidbodySleepMode2D.NeverSleep;
         rb.interpolation = RigidbodyInterpolation2D.Interpolate;
         rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+
+        // Create and apply zero friction material to prevent sticking to walls/platforms
+        PhysicsMaterial2D zeroFriction = new PhysicsMaterial2D("ZeroFriction");
+        zeroFriction.friction = 0f;
+        zeroFriction.bounciness = 0f;
+        
+        Collider2D[] cols = GetComponents<Collider2D>();
+        foreach(var c in cols)
+        {
+            c.sharedMaterial = zeroFriction;
+        }
+        if (rb != null)
+        {
+            rb.sharedMaterial = zeroFriction;
+        }
     }
 
     void Update()
@@ -168,7 +183,7 @@ public class PlayerControllerUpdate : MonoBehaviour
     IEnumerator DisableEffector(PlatformEffector2D effector)
     {
         effector.rotationalOffset = 180f;
-        yield return new WaitForSeconds(0.2f);
+        yield return new WaitForSeconds(0.4f);
         effector.rotationalOffset = 0f;
     }
-}
+}   
