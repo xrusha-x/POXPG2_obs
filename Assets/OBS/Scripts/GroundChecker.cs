@@ -5,11 +5,9 @@ public class GroundChecker : MonoBehaviour
 {
     public bool isGrounded;
     public BoxCollider2D colliderS;
-    
-    // Use a list to track all colliders we are currently touching
+
     private List<Collider2D> currentGroundColliders = new List<Collider2D>();
 
-    // Property to maintain compatibility with PlayerControllerUpdate
     public Collider2D groundCollider 
     {
         get 
@@ -18,11 +16,8 @@ public class GroundChecker : MonoBehaviour
                 return currentGroundColliders[currentGroundColliders.Count - 1];
             return null;
         }
-        // Setter kept for serialization/inspector debug, but logic should rely on triggers
         set 
         { 
-            // no-op or clear list? Better to just ignore set for now or clear/add.
-            // But original script set it in OnTriggerEnter.
         }
     }
 
@@ -33,7 +28,7 @@ public class GroundChecker : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.isTrigger) return; // Ignore triggers
+        if (collision.isTrigger) return;
 
         if (!currentGroundColliders.Contains(collision))
         {

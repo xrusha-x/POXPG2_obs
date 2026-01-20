@@ -53,7 +53,6 @@ public class PlayerControllerUpdate : MonoBehaviour
         rb.interpolation = RigidbodyInterpolation2D.Interpolate;
         rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
 
-        // Create and apply zero friction material to prevent sticking to walls/platforms
         PhysicsMaterial2D zeroFriction = new PhysicsMaterial2D("ZeroFriction");
         zeroFriction.friction = 0f;
         zeroFriction.bounciness = 0f;

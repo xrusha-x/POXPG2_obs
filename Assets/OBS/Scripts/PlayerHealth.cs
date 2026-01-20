@@ -3,6 +3,7 @@ using System.Collections;
 
 public class PlayerHealth : MonoBehaviour
 {
+    public static bool TookDamageThisLevel = false;
     [Header("Health Settings")]
     public int maxHealth = 3;
     public int currentHealth;
@@ -18,7 +19,7 @@ public class PlayerHealth : MonoBehaviour
     private Rigidbody2D rb;
     private Animator animator;
     private PlayerControllerUpdate playerController;
-    public UIManager uiManager;
+    public CustomHeartsUI heartsUI;
 
     [Header("Audio")]
     public AudioClip damageSound;
@@ -27,6 +28,7 @@ public class PlayerHealth : MonoBehaviour
 
     void Start()
     {
+        TookDamageThisLevel = false;
         currentHealth = maxHealth;
         startPosition = transform.position;
         spriteRenderer = GetComponent<SpriteRenderer>();
@@ -35,17 +37,13 @@ public class PlayerHealth : MonoBehaviour
         playerController = GetComponent<PlayerControllerUpdate>();
         audioSource = GetComponent<AudioSource>();
         
-        if (audioSource == null)
-            audioSource = gameObject.AddComponent<AudioSource>();
+        if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
         
-        // Try to find UIManager if not assigned
-        if (uiManager == null)
-            uiManager = FindObjectOfType<UIManager>();
-            
+        if (heartsUI == null) heartsUI = FindObjectOfType<CustomHeartsUI>();
+        if (heartsUI != null) heartsUI.Initialize(maxHealth);
         UpdateUI();
     }
 
-    // Handle collisions directly if Hazard script is missing on the other object
     private void OnCollisionEnter2D(Collision2D collision)
     {
         CheckDamage(collision.gameObject);
@@ -58,10 +56,6 @@ public class PlayerHealth : MonoBehaviour
 
     private void CheckDamage(GameObject obj)
     {
-        // Debug logging to verify collisions
-        // Debug.Log($"Checking damage for: {obj.name} (Parent: {(obj.transform.parent != null ? obj.transform.parent.name : "null")})");
-
-        // 1. Check for Hazard component on object OR parent
         Hazard hazard = obj.GetComponent<Hazard>();
         if (hazard == null)
         {
@@ -74,7 +68,6 @@ public class PlayerHealth : MonoBehaviour
             return;
         }
 
-        // 2. Fallback: Name check (Safe, no errors) - Check object AND parent name
         string lowerName = obj.name.ToLower();
         string parentName = obj.transform.parent != null ? obj.transform.parent.name.ToLower() : "";
         
@@ -84,28 +77,21 @@ public class PlayerHealth : MonoBehaviour
             TakeDamage(1);
             return;
         }
-
-        // 3. Unsafe Tag check removed to prevent "Tag not defined" errors
-        // If you define tags "Trap" or "Enemy" in the editor later, you can re-enable:
-        /*
-        try {
-            if (obj.CompareTag("Trap") || obj.CompareTag("Enemy")) TakeDamage(1);
-        } catch {}
-        */
     }
 
     public void TakeDamage(int damage)
     {
         if (isInvincible || currentHealth <= 0) return;
 
-        isInvincible = true; // Set immediately to prevent double-hits in same frame
+        isInvincible = true;
+        int oldHealth = currentHealth;
         currentHealth -= damage;
-        Debug.Log($"Player took damage! Current Health: {currentHealth}");
-        
+        if (damage > 0) TookDamageThisLevel = true;
         if (damageSound != null)
             audioSource.PlayOneShot(damageSound);
 
         UpdateUI();
+        if (heartsUI != null) heartsUI.PlayLoseFeedbackRange(oldHealth, currentHealth);
 
         if (currentHealth <= 0)
         {
@@ -119,16 +105,14 @@ public class PlayerHealth : MonoBehaviour
 
     void UpdateUI()
     {
-        if (uiManager != null)
+        if (heartsUI != null)
         {
-            uiManager.UpdateHealth(currentHealth);
+            heartsUI.SetHealth(currentHealth);
         }
     }
 
     void Die()
     {
-        Debug.Log("Player Died!");
-        
         if (deathSound != null)
             audioSource.PlayOneShot(deathSound);
             
@@ -161,12 +145,11 @@ public class PlayerHealth : MonoBehaviour
         }
         
         if (playerController != null) playerController.enabled = true;
-        isInvincible = false; // Ensure invincibility is reset on respawn
+        isInvincible = false;
     }
 
     IEnumerator InvincibilityRoutine()
     {
-        // isInvincible = true; // Already set in TakeDamage
         float elapsed = 0f;
         
         while (elapsed < iFrameDuration)

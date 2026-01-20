@@ -8,6 +8,24 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/SampleScene.unity
     guid: 2cda990e2423bbf4892e6590ba056729
+  - enabled: 1
+    path: Assets/OBS/Scenes/OBS_Scenes/Main_menu.unity
+    guid: 3a778ac1aa2855244a130c2194cae140
+  - enabled: 1
+    path: Assets/OBS/Scenes/OBS_Scenes/Level_menu.unity
+    guid: e355eace09bca4e47bce100a54250f5a
+  - enabled: 1
+    path: Assets/OBS/Scenes/OBS_Scenes/Set_menu.unity
+    guid: cda30c9429b6e0f4e986c94f468cc386
+  - enabled: 1
+    path: Assets/OBS/Scenes/OBS_Scenes/Level_1.unity
+    guid: a2eb7111d6a589741aa5199aeeb3a151
+  - enabled: 1
+    path: Assets/OBS/Scenes/OBS_Scenes/Level_2.unity
+    guid: 76441b2816137c74ea1359985d0c057a
+  - enabled: 1
+    path: Assets/OBS/Scenes/OBS_Scenes/Level_3.unity
+    guid: 75da8a82dd3204a499f1d016035e45b3
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 3590b91b4603b465dbb4216d601bff33, type: 3}
   m_UseUCBPForAssetBundles: 0
